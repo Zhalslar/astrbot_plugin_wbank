@@ -1,33 +1,24 @@
 import asyncio
-from astrbot.api.star import Context, Star, register
+
+from astrbot.api.event import filter
+from astrbot.api.star import Context, Star, StarTools
 from astrbot.core import AstrBotConfig
 from astrbot.core.platform import AstrMessageEvent
-from astrbot.api.event import filter
-from astrbot.api.star import StarTools
-import os
 from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
     AiocqhttpMessageEvent,
 )
 
-from data.plugins.astrbot_plugin_wbank.data import KeywordReplyDB
+from .data import KeywordReplyDB
 
 
-@register(
-    name="astrbot_plugin_wbank",
-    desc="动态词库，自定义回复词",
-    version="v1.0.3",
-    author="Zhalslar",
-    repo="https://github.com/Zhalslar/astrbot_plugin_wbank",
-)
 class WbankPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
-        plugin_data_dir = StarTools.get_data_dir("astrbot_plugin_wbank")
-        self.word_bank_file = os.path.join(plugin_data_dir, "default_word_bank.json")
+        self.conf = config
+        self.data_dir = StarTools.get_data_dir("astrbot_plugin_wbank")
+        self.word_bank_file = self.data_dir / "default_word_bank.json"
         self.db = KeywordReplyDB(self.word_bank_file)
-        self.words_limit = config.get("words_limit", 10)
-        self.delete_msg_time = config.get("delete_msg_time", 0)
-        self.need_prefix = config.get("need_prefix", True)
+
 
     @filter.command("添加词条")
     @filter.permission_type(filter.PermissionType.ADMIN)
@@ -38,7 +29,7 @@ class WbankPlugin(Star):
             await self.send(event, "格式错误，应为：添加词条 关键词 内容")
             return
         keyword, content = args
-        if len(self.db.list_entries(args[0])) >= self.words_limit:
+        if len(self.db.list_entries(args[0])) >= self.conf["words_limit"]:
             await self.send(event, f"关键词【{keyword}】的词条数量已达上限")
             return
         self.db.add_entry(keyword, content)
@@ -159,7 +150,7 @@ class WbankPlugin(Star):
     @filter.event_message_type(filter.EventMessageType.GROUP_MESSAGE)
     async def handle_message(self, event: AstrMessageEvent):
         """监听群消息自动触发关键词回复"""
-        if self.need_prefix and not event.is_at_or_wake_command:
+        if self.conf["need_prefix"] and not event.is_at_or_wake_command:
             return
         if reply := self.db.get_reply(
             keyword=event.message_str.strip(), group_id=event.get_group_id()
@@ -168,19 +159,16 @@ class WbankPlugin(Star):
 
     async def send(self, event: AstrMessageEvent, message: str):
         """发送消息"""
-        if event.get_platform_name() != "aiocqhttp":
-            await event.send(event.plain_result(message))
-            event.stop_event()
-            return
-        else:
-            # OneBot 11 API “send_msg”可以获取到消息 ID，从而撤回消息
-            assert isinstance(event, AiocqhttpMessageEvent)
-            group_id = event.get_group_id()
-            client = event.bot
+        if isinstance(event, AiocqhttpMessageEvent):
             message_id = (
-                await client.send_msg(group_id=int(group_id), message=message)
+                await event.bot.send_msg(
+                    group_id=int(event.get_group_id()), message=message
+                )
             ).get("message_id")
             event.stop_event()
-            if self.delete_msg_time > 0:
-                await asyncio.sleep(self.delete_msg_time)
-                await client.delete_msg(message_id=message_id)
+            if self.conf["recall_time"] > 0:
+                await asyncio.sleep(self.conf["recall_time"])
+                await event.bot.delete_msg(message_id=message_id)
+
+        else:
+            await event.send(event.plain_result(message))

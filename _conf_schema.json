@@ -1,20 +1,20 @@
 {
-    "words_limit": {
-        "description": "每个关键词允许的词条数",
-        "type": "int",
-        "hint": "超过此限制将无法继续添加",
-        "default": 10
-    },
-    "delete_msg_time": {
-            "description": "定义几秒后撤回消息",
-            "type": "int",
-            "hint": "0表示不撤回消息, 不允许超过120秒, 否则无法撤回",
-            "default": 0
-    },
     "need_prefix": {
         "description": "是否需要前缀唤醒bot",
         "type": "bool",
         "hint": "",
         "default": true
+    },
+    "recall_time": {
+        "description": "定义几秒后撤回消息",
+        "type": "int",
+        "hint": "0表示不撤回消息, 不允许超过120秒, 否则无法撤回",
+        "default": 0
+    },
+    "words_limit": {
+        "description": "每个关键词允许的词条数",
+        "type": "int",
+        "hint": "超过此限制将无法继续添加",
+        "default": 10
     }
 }
