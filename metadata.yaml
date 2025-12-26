@@ -1,6 +1,6 @@
-name: astrbot_plugin_wbank # 这是你的插件的唯一识别名。
+name: astrbot_plugin_wbank
 display_name: 自定义词库
-desc: 动态词库，自定义回复词 # 插件简短描述
-version: v1.0.4 # 插件版本号。格式：v1.1.1 或者 v1.1
-author: Zhalslar # 作者
-repo: https://github.com/Zhalslar/astrbot_plugin_wbank # 插件的仓库地址
+desc: 动态词库，自定义回复词
+version: v1.1.0
+author: Zhalslar
+repo: https://github.com/Zhalslar/astrbot_plugin_wbank

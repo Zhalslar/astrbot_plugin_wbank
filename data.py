@@ -1,10 +1,10 @@
 import json
-from typing import List
+from pathlib import Path
 from random import choice
 
 
 class KeywordReplyDB:
-    def __init__(self, path: str):
+    def __init__(self, path: Path):
         """初始化关键词数据库并从指定路径加载数据"""
         self.path = path
         self.data = self._load()
@@ -12,7 +12,7 @@ class KeywordReplyDB:
     def _load(self) -> dict:
         """加载 JSON 文件内容"""
         try:
-            with open(self.path, "r", encoding="utf-8") as f:
+            with open(self.path, encoding="utf-8") as f:
                 return json.load(f)
         except FileNotFoundError:
             return {}
@@ -60,14 +60,14 @@ class KeywordReplyDB:
                 return True
         return False
 
-    def list_entries(self, keyword: str) -> List[str]:
+    def list_entries(self, keyword: str) -> list[str]:
         """列出关键词下的所有词条"""
         resolved = self._resolve_keyword(keyword)
         if resolved is not None:
             return self.data[resolved]["entries"]
         return []
 
-    def set_alias(self, keyword: str, aliases: List[str]):
+    def set_alias(self, keyword: str, aliases: list[str]):
         """设置关键词的别名列表"""
         self.add_keyword(keyword)
         self.data[keyword]["alias"] = aliases
@@ -114,7 +114,7 @@ class KeywordReplyDB:
             del self.data[keyword]
             self.save()
 
-    def get_all_keywords(self) -> List[str]:
+    def get_all_keywords(self) -> list[str]:
         """获取所有关键词（含别名）"""
         all_keys = []
         for key, value in self.data.items():
